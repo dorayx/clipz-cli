@@ -1,0 +1,11 @@
+{
+  "name": "clipz",
+  "version": "0.1.0",
+  "description": "tiny plop-like generators",
+  "scripts": {},
+  "author": "doray <dev@doray.me>",
+  "license": "MIT",
+  "devDependencies": {
+    "lerna": "^3.22.1"
+  }
+}
