@@ -2,9 +2,12 @@ import inquirer from 'inquirer';
 import process from 'process';
 import fs from 'fs';
 import path from 'path';
+import memFs from 'mem-fs';
+import memFsEditor from 'mem-fs-editor';
 
 export interface CliConfig {
   generatorsDir: string;
+  toDir: string;
 }
 
 export interface GeneratorSchema {
@@ -14,10 +17,20 @@ export interface GeneratorSchema {
   };
 }
 
+export interface GeneratorMeta {
+  name: string;
+  schema: GeneratorSchema;
+}
+
+export interface TmplContext {
+  [key: string]: string;
+}
+
 function getCliConfig(): CliConfig {
   const cwd = process.cwd();
   let config: CliConfig = {
     generatorsDir: path.resolve(cwd, 'generators'),
+    toDir: path.resolve(cwd, 'src'),
   };
 
   try {
@@ -68,7 +81,7 @@ function extractGeneratorsMeta(generatorsDir: string): [string[] | null, Generat
   }
 }
 
-export const bootstrap = async () => {
+export async function chooseGenerator() {
   const cliConfig = getCliConfig();
 
   const [generatorNames, generatorSchemas] = extractGeneratorsMeta(cliConfig.generatorsDir);
@@ -91,9 +104,48 @@ export const bootstrap = async () => {
   ]);
 
   const [name, schema] = selected.generator;
-  if (schema.variables) {
-    const questions = Object.entries((schema as GeneratorSchema).variables).map(([key, opts]) => ({ name: key, ...opts }));
-    await inquirer.prompt(questions);
+  const tpmlContext = await initTmplContext(name, schema);
+
+  await copyTmpl(name, tpmlContext, cliConfig);
+}
+
+export async function initTmplContext(name: string, schema: GeneratorSchema) {
+  if (!schema.variables) {
+    return null;
   }
 
-};
+  const questions = Object.entries((schema as GeneratorSchema).variables).map(([key, opts]) => ({ name: key, ...opts }));
+  return inquirer.prompt<TmplContext>(questions);
+}
+
+export function copyTmpl(name: string, tmplContext: TmplContext | null, config: CliConfig) {
+  return new Promise((resolve, reject) => {
+    const store = memFs.create();
+    const editor = memFsEditor.create(store);
+
+    mapTmplPaths(path.resolve(config.generatorsDir, name), tmplContext)
+      .forEach(file => {
+        const tmplPath = path.relative(config.generatorsDir, file);
+        const distPath = path.join(config.toDir, tmplPath);
+        // @ts-ignore
+        editor.copyTpl(file, distPath, tmplContext);
+      });
+
+    editor.commit((err) => err ? reject(err) : resolve());
+  });
+}
+
+export function mapTmplPaths(tmplRoot: string, tmplContext: TmplContext | null): string[] {
+  return fs.readdirSync(tmplRoot)
+    .filter(filename => !/__clipz__\.js/.test(filename))
+    .reduce<string[]>((files, file) => {
+      const p = path.resolve(tmplRoot, file);
+      const appended = fs.statSync(p).isDirectory()
+        ? mapTmplPaths(p, tmplContext)
+        : [p];
+      return [
+        ...files,
+        ...appended,
+      ];
+    }, []);
+}

@@ -14,9 +14,13 @@
   "license": "MIT",
   "dependencies": {
     "inquirer": "^7.3.2",
+    "mem-fs": "^1.2.0",
+    "mem-fs-editor": "^7.0.1",
     "typescript": "^3.9.6"
   },
   "devDependencies": {
-    "@types/inquirer": "^6.5.0"
+    "@types/inquirer": "^6.5.0",
+    "@types/mem-fs": "^1.1.2",
+    "@types/mem-fs-editor": "^7.0.0"
   }
 }
