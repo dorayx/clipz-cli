@@ -2,4 +2,4 @@
 
 const cli = require('../dist');
 
-cli.chooseGenerator();
+cli.chooseGeneratorInteractively();
