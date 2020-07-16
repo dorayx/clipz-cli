@@ -3,6 +3,10 @@
   "version": "1.0.0",
   "description": "a tiny plop-like generator cli",
   "main": "dist/index.js",
+  "files": [
+    "dist",
+    "bin"
+  ],
   "bin": {
     "clipz": "bin/clipz.js"
   },
