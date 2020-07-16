@@ -26,5 +26,6 @@
     "@types/inquirer": "^6.5.0",
     "@types/mem-fs": "^1.1.2",
     "@types/mem-fs-editor": "^7.0.0"
-  }
+  },
+  "gitHead": "7ecd9e2870c53565fadfa12e5799fbc7c6255041"
 }
